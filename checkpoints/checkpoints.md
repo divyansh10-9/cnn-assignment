@@ -1,0 +1,1 @@
+## Model checkpoints are downloaded automatically using Google Drive links in multitask.py
