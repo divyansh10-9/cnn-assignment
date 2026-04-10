@@ -53,7 +53,7 @@ class OxfordIIITPetDataset(Dataset):
             parts = line.strip().split()
 
             image_name = parts[0]
-            label = int(parts[1]) - 1
+            label = int(parts[1]) - 1  # 0-indexed breed label
 
             img_path = os.path.join(self.images_dir, image_name + ".jpg")
             mask_path = os.path.join(self.masks_dir, image_name + ".png")
@@ -70,24 +70,32 @@ class OxfordIIITPetDataset(Dataset):
         return len(self.samples)
 
     def _extract_bbox(self, mask):
+        """Extract normalized bounding box [0,1] from trimap mask.
 
-        mask = np.array(mask)
+        Returns (x_center, y_center, width, height) all normalized
+        to [0, 1] relative to mask dimensions.
+        """
 
-        ys, xs = np.where(mask > 0)
+        mask_arr = np.array(mask)
+        H, W = mask_arr.shape
+
+        # Foreground pixels (label 1 in Oxford trimaps = foreground)
+        ys, xs = np.where(mask_arr == 1)
 
         if len(xs) == 0 or len(ys) == 0:
-            return np.array([0, 0, 0, 0], dtype=np.float32)
+            # Fallback: use entire image
+            return np.array([0.5, 0.5, 1.0, 1.0], dtype=np.float32)
 
         x_min = xs.min()
         x_max = xs.max()
         y_min = ys.min()
         y_max = ys.max()
 
-        x_center = (x_min + x_max) / 2
-        y_center = (y_min + y_max) / 2
-
-        width = x_max - x_min
-        height = y_max - y_min
+        # Normalize to [0, 1]
+        x_center = ((x_min + x_max) / 2) / W
+        y_center = ((y_min + y_max) / 2) / H
+        width = (x_max - x_min) / W
+        height = (y_max - y_min) / H
 
         return np.array([x_center, y_center, width, height], dtype=np.float32)
 
@@ -101,15 +109,19 @@ class OxfordIIITPetDataset(Dataset):
         # Transform image
         image = self.transform(image)
 
-        # Resize mask first
-        mask = T.Resize((self.image_size, self.image_size))(mask)
+        # Resize mask
+        mask = T.Resize(
+            (self.image_size, self.image_size),
+            interpolation=T.InterpolationMode.NEAREST
+        )(mask)
 
-        # Extract bbox AFTER resizing
+        # Extract normalized bbox AFTER resizing
         bbox = self._extract_bbox(mask)
 
-        # Convert mask to tensor and fix label range (0,1,2)
-        mask = torch.from_numpy(np.array(mask)).long() - 1
-        mask = mask.clamp(min=0)
+        # Convert mask to tensor: Oxford trimaps are 1=fg, 2=bg, 3=boundary
+        # Remap to 0-indexed: 0=fg, 1=bg, 2=boundary
+        mask_tensor = torch.from_numpy(np.array(mask)).long() - 1
+        mask_tensor = mask_tensor.clamp(min=0, max=2)
 
         label = torch.tensor(sample["label"]).long()
         bbox = torch.tensor(bbox).float()
@@ -118,5 +130,5 @@ class OxfordIIITPetDataset(Dataset):
             "image": image,
             "label": label,
             "bbox": bbox,
-            "mask": mask
+            "mask": mask_tensor
         }

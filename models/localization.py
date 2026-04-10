@@ -9,7 +9,12 @@ from .layers import CustomDropout
 
 
 class VGG11Localizer(nn.Module):
-    """VGG11-based localizer."""
+    """VGG11-based localizer.
+
+    Outputs bounding boxes in (x_center, y_center, width, height) format,
+    normalized to [0, 1] relative to image dimensions so predictions are
+    image-size agnostic at inference time.
+    """
 
     def __init__(self, in_channels: int = 3, dropout_p: float = 0.5):
         """
@@ -37,19 +42,22 @@ class VGG11Localizer(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass.
 
-        _, _, H, W = x.shape
+        Args:
+            x: Input tensor [B, C, H, W].
+
+        Returns:
+            Bounding boxes [B, 4] as (x_center, y_center, width, height),
+            each value normalized to [0, 1] relative to image size.
+        """
 
         features = self.encoder(x)
-
         bbox = self.localizer(features)
 
-        # safer version (no inplace ops)
-        bbox = torch.stack([
-            torch.sigmoid(bbox[:, 0]) * W,
-            torch.sigmoid(bbox[:, 1]) * H,
-            torch.sigmoid(bbox[:, 2]) * W,
-            torch.sigmoid(bbox[:, 3]) * H
-        ], dim=1)
+        # Sigmoid to constrain all four values to (0, 1).
+        # This keeps coordinates normalized regardless of input resolution,
+        # which matches how the Oxford-IIIT Pet bboxes should be represented.
+        bbox = torch.sigmoid(bbox)
 
         return bbox

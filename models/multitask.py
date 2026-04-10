@@ -31,9 +31,9 @@ class MultiTaskPerceptionModel(nn.Module):
         import gdown
 
         # Download pretrained weights
-        gdown.download(id="1lT0ZIbZg0wgnB9qZRQhovCARektOucsu", output=classifier_path, quiet=False)
-        gdown.download(id="1BH_30lmZVuTTJRHqPuTi2-U5k69_QVlF", output=localizer_path, quiet=False)
-        gdown.download(id="1PemA9Uy88wFPp9rrAzE1Pw1Xohc5We8N", output=unet_path, quiet=False)
+        gdown.download(id="19dR8GLj8m_9WX8mpMwgHrX9eDlhLTDKr", output=classifier_path, quiet=False)
+        gdown.download(id="1rC1Z7CNsFLvUyFGi6Za6SJ1RKvX4w9Be", output=localizer_path, quiet=False)
+        gdown.download(id="1i6gBTBcxGRSRm7zfDHcwIpDGxuxWZZ6p", output=unet_path, quiet=False)
 
         # Shared backbone
         self.encoder = VGG11(in_channels=in_channels)
