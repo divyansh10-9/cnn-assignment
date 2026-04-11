@@ -77,7 +77,8 @@ def train_classifier(model, dataloader, val_loader, device, epochs=50, lr=1e-4):
               f"Train Loss: {avg_loss:.4f}  Val Loss: {avg_val_loss:.4f}  Val Acc: {val_acc:.4f}")
 
 
-def train_localizer(model, dataloader, val_loader, device, epochs=50, lr=1e-4):
+def train_localizer(model, dataloader, val_loader, device, epochs=50, lr=1e-4,
+                    image_size=224):
 
     print("Starting localization training...")
 
@@ -98,14 +99,20 @@ def train_localizer(model, dataloader, val_loader, device, epochs=50, lr=1e-4):
                 print(f"  Batch {batch_idx}/{len(dataloader)}")
 
             images = batch["image"].to(device)
-            # bbox is normalized [0,1] (x_center, y_center, width, height)
+            # bbox is in pixel space (x_center, y_center, width, height) ∈ [0, image_size]
             bbox = batch["bbox"].to(device)
 
             optimizer.zero_grad()
             outputs = model(images)
 
-            # Combined SmoothL1 + IoU loss on normalized coords
-            loss = smooth_l1(outputs, bbox) + iou_loss_fn(outputs, bbox)
+            # Normalize to [0,1] for SmoothL1 so it's on the same scale as IoU loss.
+            # This prevents the pixel-magnitude SmoothL1 from drowning out the IoU signal.
+            norm = float(image_size)
+            smooth_l1_loss = smooth_l1(outputs / norm, bbox / norm)
+            iou_loss = iou_loss_fn(outputs, bbox)
+
+            # Weight IoU more heavily for better localization precision
+            loss = smooth_l1_loss + 2.0 * iou_loss
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
@@ -266,7 +273,8 @@ def main(args):
         print("Initializing localization model...")
         model = VGG11Localizer().to(device)
         train_localizer(model, train_loader, val_loader, device,
-                        epochs=args.epochs, lr=args.lr)
+                        epochs=args.epochs, lr=args.lr,
+                        image_size=train_dataset.image_size)
         torch.save(model.state_dict(), "checkpoints/localizer.pth")
         print("Saved checkpoints/localizer.pth")
 
@@ -295,7 +303,7 @@ if __name__ == "__main__":
         choices=["classification", "localization", "segmentation"],
     )
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--epochs",     type=int, default=30)
+    parser.add_argument("--epochs",     type=int, default=50)
     parser.add_argument("--lr",         type=float, default=1e-4)
 
     args = parser.parse_args()
