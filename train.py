@@ -14,7 +14,7 @@ from models.segmentation import VGG11UNet
 from losses.iou_loss import IoULoss
 
 
-def train_classifier(model, dataloader, val_loader, device, epochs=30, lr=1e-4):
+def train_classifier(model, dataloader, val_loader, device, epochs=50, lr=1e-4):
 
     print("Starting classifier training...")
 
@@ -77,7 +77,7 @@ def train_classifier(model, dataloader, val_loader, device, epochs=30, lr=1e-4):
               f"Train Loss: {avg_loss:.4f}  Val Loss: {avg_val_loss:.4f}  Val Acc: {val_acc:.4f}")
 
 
-def train_localizer(model, dataloader, val_loader, device, epochs=30, lr=1e-4):
+def train_localizer(model, dataloader, val_loader, device, epochs=50, lr=1e-4):
 
     print("Starting localization training...")
 
@@ -154,7 +154,7 @@ def dice_loss(pred, target, eps=1e-6):
     return 1 - dice.mean()
 
 
-def train_segmenter(model, dataloader, val_loader, device, epochs=30, lr=1e-4):
+def train_segmenter(model, dataloader, val_loader, device, epochs=50, lr=1e-4):
 
     print("Starting segmentation training...")
 

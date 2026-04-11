@@ -129,11 +129,11 @@ class MultiTaskPerceptionModel(nn.Module):
 
         # ── Download pretrained weights ────────────────────────────────────
         # UPDATE THESE IDs whenever you upload new .pth files to Google Drive
-        gdown.download(id="17-EkgXrj_6WugmPVXTFevjswcBvGptNO",
+        gdown.download(id="1tMymLIc119clBxKj80h6eGI48p9beX14",
                        output=classifier_path, quiet=False)
-        gdown.download(id="1wsGCjZxF6aiUsqqItu0cJ_T9LrbZb8Fx",
+        gdown.download(id="1iDZoRXNgA5ol55M0w5qEqF9T_OBnd-7V",
                        output=localizer_path, quiet=False)
-        gdown.download(id="1M_kKWl-W4DNusycSNN45uD-xR5XSUYwQ",
+        gdown.download(id="1auJ5wT0AASMdOp239f7TIHy03AuDd2hP",
                        output=unet_path, quiet=False)
 
         # ── Instantiate each model and load its own weights ────────────────
