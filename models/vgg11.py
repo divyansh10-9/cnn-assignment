@@ -114,6 +114,4 @@ class VGG11(nn.Module):
         return x
 
 
-# Alias required by the autograder:
-#   from models.vgg11 import VGG11Encoder as VGG11
 VGG11Encoder = VGG11

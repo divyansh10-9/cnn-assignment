@@ -99,19 +99,17 @@ def train_localizer(model, dataloader, val_loader, device, epochs=50, lr=1e-4,
                 print(f"  Batch {batch_idx}/{len(dataloader)}")
 
             images = batch["image"].to(device)
-            # bbox is in pixel space (x_center, y_center, width, height) ∈ [0, image_size]
             bbox = batch["bbox"].to(device)
 
             optimizer.zero_grad()
             outputs = model(images)
 
             # Normalize to [0,1] for SmoothL1 so it's on the same scale as IoU loss.
-            # This prevents the pixel-magnitude SmoothL1 from drowning out the IoU signal.
             norm = float(image_size)
             smooth_l1_loss = smooth_l1(outputs / norm, bbox / norm)
             iou_loss = iou_loss_fn(outputs, bbox)
 
-            # Weight IoU more heavily for better localization precision
+            
             loss = smooth_l1_loss + 2.0 * iou_loss
             loss.backward()
             optimizer.step()
@@ -185,7 +183,6 @@ def train_segmenter(model, dataloader, val_loader, device, epochs=50, lr=1e-4):
             optimizer.zero_grad()
             outputs = model(images)
 
-            # Combined Dice + CE loss for better convergence
             loss = dice_loss(outputs, masks) + ce_loss(outputs, masks)
             loss.backward()
             optimizer.step()

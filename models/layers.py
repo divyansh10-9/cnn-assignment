@@ -32,8 +32,8 @@ class CustomDropout(nn.Module):
         if not self.training or self.p == 0:
             return x
 
-        # Create dropout mask
+        # create dropout mask
         mask = (torch.rand_like(x) > self.p).float()
 
-        # Apply inverted dropout scaling
+        # apply inverted dropout scaling
         return x * mask / (1 - self.p)

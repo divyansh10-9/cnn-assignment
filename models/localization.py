@@ -49,8 +49,6 @@ class VGG11Localizer(nn.Module):
         features = self.encoder(x)
         raw = self.localizer(features)
 
-        # Sigmoid then scale to pixel space — matches ground-truth format
-        # in pets_dataset.py and what the autograder expects.
         bbox = torch.stack([
             torch.sigmoid(raw[:, 0]) * W,   # cx in [0, W]
             torch.sigmoid(raw[:, 1]) * H,   # cy in [0, H]

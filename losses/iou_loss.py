@@ -31,7 +31,7 @@ class IoULoss(nn.Module):
             target_boxes: [B, 4] target boxes in (x_center, y_center, width, height) format.
         """
 
-        # Convert (xc, yc, w, h) -> (x1, y1, x2, y2)
+       
 
         pred_x1 = pred_boxes[:, 0] - pred_boxes[:, 2] / 2
         pred_y1 = pred_boxes[:, 1] - pred_boxes[:, 3] / 2

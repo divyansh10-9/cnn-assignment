@@ -53,7 +53,7 @@ class OxfordIIITPetDataset(Dataset):
             parts = line.strip().split()
 
             image_name = parts[0]
-            label = int(parts[1]) - 1  # 0-indexed breed label
+            label = int(parts[1]) - 1  
 
             img_path = os.path.join(self.images_dir, image_name + ".jpg")
             mask_path = os.path.join(self.masks_dir, image_name + ".png")
@@ -80,13 +80,11 @@ class OxfordIIITPetDataset(Dataset):
         mask_arr = np.array(mask)
         H, W = mask_arr.shape
 
-        # Oxford trimaps: 1=foreground, 2=background, 3=boundary
-        # Use foreground pixels; fall back to all non-zero if none found.
+        
         ys, xs = np.where(mask_arr == 1)
         if len(xs) == 0:
             ys, xs = np.where(mask_arr > 0)
         if len(xs) == 0:
-            # Degenerate mask — return full image box
             return np.array([W / 2, H / 2, float(W), float(H)],
                             dtype=np.float32)
 
@@ -121,8 +119,6 @@ class OxfordIIITPetDataset(Dataset):
         # Extract normalized bbox AFTER resizing
         bbox = self._extract_bbox(mask)
 
-        # Convert mask to tensor: Oxford trimaps are 1=fg, 2=bg, 3=boundary
-        # Remap to 0-indexed: 0=fg, 1=bg, 2=boundary
         mask_tensor = torch.from_numpy(np.array(mask)).long() - 1
         mask_tensor = mask_tensor.clamp(min=0, max=2)
 
